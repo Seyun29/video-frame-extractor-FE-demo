@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import JSZip from 'jszip'
 import './FrameGallery.css'
 
 export default function FrameGallery({ frames }) {
@@ -59,6 +60,30 @@ export default function FrameGallery({ frames }) {
     }
   }
 
+  const handleDownloadAll = async () => {
+    try {
+      const zip = new JSZip()
+      
+      // Fetch all frames and add to zip
+      for (const frame of frames) {
+        const response = await fetch(frame.url)
+        const blob = await response.blob()
+        zip.file(`${frame.index}.jpg`, blob)
+      }
+
+      // Generate zip and download
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(zipBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'extracted-frames.zip'
+      link.click()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('Failed to download frames: ' + err.message)
+    }
+  }
+
   if (isPreviewMode) {
     const bgColor = frames[0]?.fillColor === 'black' ? '#ffffff' : '#000000'
     
@@ -103,6 +128,12 @@ export default function FrameGallery({ frames }) {
             onClick={() => setIsPreviewMode(true)}
           >
             ▶ Preview
+          </button>
+          <button
+            className="download-all-btn"
+            onClick={handleDownloadAll}
+          >
+            ⬇ Download All
           </button>
           <button
             className="upload-drive-btn"
