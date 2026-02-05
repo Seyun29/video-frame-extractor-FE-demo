@@ -1,13 +1,20 @@
 import React, { useState, useRef } from 'react'
 import './FrameExtractor.css'
 
-const FRAME_COUNTS = [20, 30, 40]
-
-export default function FrameExtractor({ video, onFramesExtracted, onError, cropSettings }) {
+export default function FrameExtractor({ video, onFramesExtracted, onError, cropSettings, frameCount = null }) {
   const [isExtracting, setIsExtracting] = useState(false)
   const [progress, setProgress] = useState(0)
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
+
+  const FRAME_COUNTS = frameCount ? [frameCount] : [20, 30, 40]
+
+  // Auto-extract when frameCount is provided
+  React.useEffect(() => {
+    if (frameCount && !isExtracting) {
+      extractFrames(frameCount)
+    }
+  }, [frameCount])
 
   const extractFrames = async (frameCount) => {
     setIsExtracting(true)
@@ -85,18 +92,20 @@ export default function FrameExtractor({ video, onFramesExtracted, onError, crop
 
   return (
     <div className="extractor-container">
-      <div className="buttons-group">
-        {FRAME_COUNTS.map((count) => (
-          <button
-            key={count}
-            className="extract-btn"
-            onClick={() => extractFrames(count)}
-            disabled={isExtracting}
-          >
-            Extract to {count} frames
-          </button>
-        ))}
-      </div>
+      {!frameCount && (
+        <div className="buttons-group">
+          {FRAME_COUNTS.map((count) => (
+            <button
+              key={count}
+              className="extract-btn"
+              onClick={() => extractFrames(count)}
+              disabled={isExtracting}
+            >
+              Extract to {count} frames
+            </button>
+          ))}
+        </div>
+      )}
 
       {isExtracting && (
         <div className="progress-container">

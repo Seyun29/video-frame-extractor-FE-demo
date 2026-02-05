@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import JSZip from 'jszip'
 import './FrameGallery.css'
 
-export default function FrameGallery({ frames }) {
+export default function FrameGallery({ frames, originalFrames = null }) {
   const [selectedFrame, setSelectedFrame] = useState(null)
   const [isPreviewMode, setIsPreviewMode] = useState(false)
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0)
@@ -64,11 +64,27 @@ export default function FrameGallery({ frames }) {
     try {
       const zip = new JSZip()
       
-      // Fetch all frames and add to zip
+      // Add merged frames
+      const mergedFolder = zip.folder('merged')
       for (const frame of frames) {
         const response = await fetch(frame.url)
         const blob = await response.blob()
-        zip.file(`${frame.index}.jpg`, blob)
+        mergedFolder.file(`${frame.index}.jpg`, blob)
+      }
+
+      // Add original frames if available
+      if (originalFrames && originalFrames.length > 0) {
+        for (let videoIdx = 0; videoIdx < originalFrames.length; videoIdx++) {
+          const videoFrames = originalFrames[videoIdx].frames
+          if (videoFrames && videoFrames.length > 0) {
+            const videoFolder = zip.folder(`video-${videoIdx + 1}`)
+            for (const frame of videoFrames) {
+              const response = await fetch(frame.url)
+              const blob = await response.blob()
+              videoFolder.file(`${frame.index}.jpg`, blob)
+            }
+          }
+        }
       }
 
       // Generate zip and download
